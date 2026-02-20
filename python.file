@@ -1,0 +1,91 @@
+"""
+TASK: Automated Report Generation
+
+This script:
+1. Reads data 
+2. Analyzes the data
+3. Generates a formatted PDF report using ReportLab
+
+Required Libraries:
+pip install pandas reportlab
+"""
+
+import pandas as pd
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import pagesizes
+from reportlab.lib.units import inch
+
+# -----------------------------
+#  READ DATA FROM FILE
+# -----------------------------
+
+data = {
+    "Student": ["Aman", "Riya", "Sohan", "Priya", "Rahul"],
+    "Math": [85, 90, 78, 88, 76],
+    "Science": [92, 87, 80, 91, 79],
+    "English": [88, 93, 75, 84, 77]
+}
+
+df = pd.DataFrame(data)
+
+# -----------------------------
+#  ANALYZE DATA
+# -----------------------------
+
+average_scores = df.mean(numeric_only=True)
+highest_math = df.loc[df["Math"].idxmax()]
+lowest_math = df.loc[df["Math"].idxmin()]
+
+# -----------------------------
+# GENERATE PDF REPORT
+# -----------------------------
+
+pdf_path = "Automated_Report.pdf"
+doc = SimpleDocTemplate(pdf_path, pagesize=pagesizes.A4)
+
+elements = []
+styles = getSampleStyleSheet()
+
+# Title
+elements.append(Paragraph("Automated Student Performance Report", styles["Title"]))
+elements.append(Spacer(1, 0.5 * inch))
+
+# Average Scores Section
+elements.append(Paragraph("Average Scores:", styles["Heading2"]))
+elements.append(Spacer(1, 0.2 * inch))
+
+for subject, score in average_scores.items():
+    elements.append(Paragraph(f"{subject}: {round(score, 2)}", styles["Normal"]))
+
+elements.append(Spacer(1, 0.5 * inch))
+
+# Highest & Lowest Section
+elements.append(Paragraph("Highest Math Score:", styles["Heading2"]))
+elements.append(Paragraph(f"{highest_math['Student']} - {highest_math['Math']}", styles["Normal"]))
+elements.append(Spacer(1, 0.3 * inch))
+
+elements.append(Paragraph("Lowest Math Score:", styles["Heading2"]))
+elements.append(Paragraph(f"{lowest_math['Student']} - {lowest_math['Math']}", styles["Normal"]))
+elements.append(Spacer(1, 0.5 * inch))
+
+# Full Data Table
+elements.append(Paragraph("Full Student Data:", styles["Heading2"]))
+elements.append(Spacer(1, 0.2 * inch))
+
+table_data = [df.columns.tolist()] + df.values.tolist()
+table = Table(table_data)
+
+table.setStyle(TableStyle([
+    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ('ALIGN', (1, 1), (-1, -1), 'CENTER')
+]))
+
+elements.append(table)
+
+doc.build(elements)
+
+print("PDF Report Generated Successfully!")
